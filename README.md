@@ -15,7 +15,8 @@ to have, or generally be. If we think of a "normal" container as providing a bas
 operating system to support libraries, small data files, and ultimately running
 scientific software, then we might define a data container as:
 
-> a container to support the provenance, management, and query of data.
+1. a container to support the provenance, management, and query of data.
+2. container should work bound as a volume or on it's own
 
 ## Docker
 
