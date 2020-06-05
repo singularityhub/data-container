@@ -5,13 +5,13 @@ services:
     image: busybox
     entrypoint: ["tail", "-f", "/dev/null"]
     volumes:
-      - data-volume:/data
+      - data-volume:/scif
 
   data:
     restart: always
     image: hello
     volumes:
-      - data-volume:/data
+      - data-volume:/scif
 
 volumes:
   data-volume:

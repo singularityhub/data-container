@@ -1,0 +1,8 @@
+FROM quay.io/scif/scif-go:0.0.1.rc as base
+COPY recipe.scif /recipe.scif
+RUN scif install /recipe.scif
+FROM scratch
+WORKDIR /scif
+COPY --from=base /scif/ /scif/
+COPY sleep /sleep
+CMD ["/sleep"]

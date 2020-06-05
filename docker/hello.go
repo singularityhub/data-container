@@ -4,5 +4,5 @@ package main
 import "fmt"
 
 func main() {
-    fmt.Println("Hello from OS-less container (Go edition)")
+	fmt.Println("Hello from OS-less container (Go edition)")
 }

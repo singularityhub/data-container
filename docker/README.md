@@ -122,5 +122,76 @@ volumes:
   data-volume:
 ```
 
+## Testing the Scientific Filesystem
+
 We next want to figure out how to provide functions to query (or otherwise interact)
-with the data in the container.
+with the data in the container. I thought it would be fun to first try
+adding a scif binary to the container, and we can do this by grabbing
+it from [quay.io/scif/scif-go](https://quay.io/repository/scif/scif-go?tab=tags).
+Note that it's a multistage build - we watch to just grab the scif
+binary and then add it to scratch.
+
+```
+FROM quay.io/scif/scif-go:0.0.1.rc as base
+FROM scratch
+WORKDIR /data
+COPY --from=base /usr/local/bin/scif /scif
+CMD ["/scif"]
+```
+
+Now we can build
+
+```bash
+docker build -f Dockerfile.scif -t hello .
+```
+
+and test running it - do we hit (and successfully run) the scif binary?
+
+```bash
+docker run -it hello
+standard_init_linux.go:211: exec user process caused "no such file or directory"
+```
+
+That didn't work, so likely we need to interact with scif before we do a multistage
+build. The scientific filesystem can install data, and then remove itself. Take
+a look at the [recipe.scif](recipe.scif) file for how we create files and data.
+We can then update the docker-compose.yml.
+
+```
+version: "3"
+services:
+  base:
+    restart: always
+    image: busybox
+    entrypoint: ["tail", "-f", "/dev/null"]
+    volumes:
+      - data-volume:/data
+
+  data:
+    restart: always
+    image: hello
+    volumes:
+      - data-volume:/data
+
+volumes:
+  data-volume:
+```
+
+and then remove the previous data volume, and run the orchestration again:
+
+```bsah
+docker-compose up -d
+$ docker exec -it docker_base_1 sh
+```
+
+And we can see the scif data hierarchy at the base of the container!
+```bash
+/ # ls /scif/
+apps  data
+/ # ls /scif/data/
+hello-custom        hello-world-echo    hello-world-env     hello-world-script
+```
+Although the dependencies for the associated apps software (in the apps folder)
+might not be included in the container, this would still be a way to package
+scripts alongside the data. Of course now we would want to figure out how to
+package the data, generate a manifest for it, and then query.
