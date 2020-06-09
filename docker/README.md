@@ -231,6 +231,13 @@ func main() {
 }
 ```
 
+```bash
+go get github.com/mattn/go-sqlite3
+GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o db -i db.go
+$ docker build -f Dockerfile.db -t db .
+$ docker run db
+```
+
 We get an error:
 
 ```
@@ -248,7 +255,7 @@ the host in some way.
 Let's try this again, this time with the approach above. This seems to work!
 
 ```bash
-go get github.com/mattn/go-sqlite3
+go get github.com/singularityhub/containerdb
 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o db -i db.go
 ```
 
@@ -265,7 +272,6 @@ $ docker run db
 value is myvalue
 ```
 
-I'm next working on a fully fledged library to handle this. We would want the
-database to be populated at build time, likely written into the binary,
-and then interacted with as we see above.
-
+Woot! So next I'm going to, instead of having a single random value added,
+have it be so that an actual dataset metadata is added here, and then we expose
+functions to interact / query it.  More to come!
