@@ -195,3 +195,77 @@ Although the dependencies for the associated apps software (in the apps folder)
 might not be included in the container, this would still be a way to package
 scripts alongside the data. Of course now we would want to figure out how to
 package the data, generate a manifest for it, and then query.
+
+## Testing A Memory Database
+
+One thing I want to try is embedding a database into the binary that includes
+an easy way to interact with (e.g., search or otherwise query) the data.
+My first idea is to use an in memory database, so I'd basically want to:
+
+ 1. Embed the SQL schema and rows in the go binary as strings.
+ 2. Open a new memory database when on init (sql.Open("sqlite3",:memory:`)
+ 3. Create the schema and insert the rows.
+
+Although there isn't disk access, if we do something simple like:
+
+```go
+package main
+
+import (
+    "database/sql"
+    "fmt"
+    "log"
+
+    _ "github.com/mattn/go-sqlite3"
+)
+
+func main() {
+
+    // Open an in memory database
+    fmt.Println("Attempting to open in-memory database.")
+    db, err := sql.Open("sqlite3", ":memory:")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(db)
+}
+```
+
+We get an error:
+
+```
+standard_init_linux.go:211: exec user process caused "no such file or directory"
+```
+Meaning that the sqlite library we are using is likely needing to interact with
+the host in some way.
+
+### A Simpler Approach
+
+1. Find an in-memory database
+2. Test setting / getting values
+3. Create custom container library
+
+Let's try this again, this time with the approach above. This seems to work!
+
+```bash
+go get github.com/mattn/go-sqlite3
+GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o db -i db.go
+```
+
+...build it (we don't need docker-compose since it has an entrypoint)
+
+```bash
+$ docker build -f Dockerfile.db -t db .
+```
+
+We are able to set and print a value, no OS required.
+
+```bash
+$ docker run db
+value is myvalue
+```
+
+I'm next working on a fully fledged library to handle this. We would want the
+database to be populated at build time, likely written into the binary,
+and then interacted with as we see above.
+
