@@ -17,10 +17,14 @@ scientific software, then we might define a data container as:
 
 1. a container to support the provenance, management, and query of data.
 2. container should work bound as a volume or on it's own
+3. it should be possible to customize how metadata is extracted from the dataset
 
-## Docker
+## Development
 
-Since Docker is slightly easier to work with and already had scratch support,
-I decided to start there.
+See the [devel](devel) folder for early development work. 
 
- - [Docker](docker)
+## Data Containers
+
+This repository will soon be populated with specific docker and singularity examples, generated
+by way of [vsoch/cdb](https://github.com/vsoch/cdb), the container database
+metadata generator.
