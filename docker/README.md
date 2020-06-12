@@ -255,7 +255,7 @@ the host in some way.
 Let's try this again, this time with the approach above. This seems to work!
 
 ```bash
-go get github.com/singularityhub/containerdb
+go get github.com/vsoch/containerdb
 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o db -i db.go
 ```
 
