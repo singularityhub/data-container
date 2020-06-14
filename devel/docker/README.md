@@ -275,3 +275,78 @@ value is myvalue
 Woot! So next I'm going to, instead of having a single random value added,
 have it be so that an actual dataset metadata is added here, and then we expose
 functions to interact / query it.  More to come!
+
+## Using cdb
+
+Between the last example and this one, I've developed a Python helper, cdb (container database)
+at [vsoch/cdb](https://github.com/vsoch/cdb) that is optimized to extract metadata for files.
+Don't worry about that too much for now, but I'll say the basic idea is that it generates
+a golang script that is akin to the previous db.go, and then that can be built and added
+to a container with scratch. For the real process I'll use multiple multistage builds
+and not need to do anything on the host, but for now I'll just follow the same practice
+as above. The idea now is that we are working on a template for cdb that will
+also add a command line parser to the entrypoint. This work will be in [entrypoint.go].
+I'll also want to write functions for basic searching, and indexing.
+
+```
+GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o entrypoint -i entrypoint.go
+$ docker build -f Dockerfile.entrypoint -t entrypoint .
+```
+
+We then have a simple way to do the following:
+
+**metadata**
+
+If we just run the container, we get a listing of all metadata alongside the key.
+
+```bash
+$ docker run entrypoint 
+/data/avocado.txt {"size": 9, "sha256": "327bf8231c9572ecdfdc53473319699e7b8e6a98adf0f383ff6be5b46094aba4"}
+/data/tomato.txt {"size": 8, "sha256": "3b7721618a86990a3a90f9fa5744d15812954fba6bb21ebf5b5b66ad78cf5816"}
+```
+
+We can also just list data files with `-ls`
+
+```bash
+$ docker run entrypoint -ls
+/data/avocado.txt
+/data/tomato.txt
+```
+
+Or we can list ordered by one of the metadata items:
+
+```bash
+$ docker run entrypoint -metric size
+Order by size
+/data/tomato.txt: {"size": 8, "sha256": "3b7721618a86990a3a90f9fa5744d15812954fba6bb21ebf5b5b66ad78cf5816"}
+/data/avocado.txt: {"size": 9, "sha256": "327bf8231c9572ecdfdc53473319699e7b8e6a98adf0f383ff6be5b46094aba4"}
+```
+
+Or search for a specific metric based on value.
+
+```bash
+$ docker run entrypoint -metric size -search 8
+/data/tomato.txt 8
+
+$ docker run entrypoint -metric sha256 -search 8
+/data/avocado.txt 327bf8231c9572ecdfdc53473319699e7b8e6a98adf0f383ff6be5b46094aba4
+/data/tomato.txt 3b7721618a86990a3a90f9fa5744d15812954fba6bb21ebf5b5b66ad78cf5816
+```
+
+Or we can get a particular file metadata by it's name:
+
+```bash
+$ docker run entrypoint -get /data/avocado.txt
+/data/avocado.txt {"size": 9, "sha256": "327bf8231c9572ecdfdc53473319699e7b8e6a98adf0f383ff6be5b46094aba4"}
+```
+
+or a partial match:
+
+```bash
+$ docker run entrypoint -get /data/
+/data/avocado.txt {"size": 9, "sha256": "327bf8231c9572ecdfdc53473319699e7b8e6a98adf0f383ff6be5b46094aba4"}
+/data/tomato.txt {"size": 8, "sha256": "3b7721618a86990a3a90f9fa5744d15812954fba6bb21ebf5b5b66ad78cf5816"}
+```
+
+Okay, so I think this is a good start for a generic filestructure of data! I'll update
+the cdb library to use this template.

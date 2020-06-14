@@ -1,0 +1,5 @@
+FROM scratch
+WORKDIR /data
+COPY data/ .
+COPY entrypoint /entrypoint
+ENTRYPOINT ["/entrypoint"]
